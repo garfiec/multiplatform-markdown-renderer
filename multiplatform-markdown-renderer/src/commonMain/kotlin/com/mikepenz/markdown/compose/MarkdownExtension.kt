@@ -46,22 +46,11 @@ fun MarkdownElement(
     components: MarkdownComponents,
     content: String,
     includeSpacer: Boolean = true,
-) = MarkdownElementInternal(node, components, content, includeSpacer)
-
-@Composable
-internal fun MarkdownElementInternal(
-    node: ASTNode,
-    components: MarkdownComponents,
-    content: CharSequence,
-    includeSpacer: Boolean = true,
 ) {
     val typography = LocalMarkdownTypography.current
     val model = remember(node, content, typography) {
-        // It's safe to pass `CharSequence` and its `toString` here.
-        // Reason: It's guaranteed that even the source `StringBuilder` changes, The render result is not dirty.
-        // So it's fine to remember it.
         MarkdownComponentModel(
-            content = content.toString(),
+            content = content,
             node = node,
             typography = typography,
         )
@@ -96,7 +85,7 @@ internal fun MarkdownElementInternal(
 
     if (!handled) {
         node.children.forEach { child ->
-            MarkdownElementInternal(child, components, content, includeSpacer)
+            MarkdownElement(child, components, content, includeSpacer)
         }
     }
 }

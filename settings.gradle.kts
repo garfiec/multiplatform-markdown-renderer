@@ -29,6 +29,8 @@ dependencyResolutionManagement {
     versionCatalogs {
         create("baseLibs") {
             from("com.mikepenz:version-catalog:0.22.0")
+            // Built inside Switchboard's composite build, which allows one Android Gradle plugin.
+            version("agp", "9.5.1")
         }
     }
 }

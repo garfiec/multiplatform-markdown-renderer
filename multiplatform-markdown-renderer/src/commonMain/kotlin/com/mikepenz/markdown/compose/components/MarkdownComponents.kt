@@ -45,6 +45,12 @@ data class MarkdownComponentModel(
     val extra: ImmutableMap<String, Any> = persistentMapOf(),
 )
 
+/**
+ * Key of the markdown source in the [MarkdownComponentModel.extra] of an inline image, whose
+ * [MarkdownComponentModel.content] is the image's link. The model's node indexes the source.
+ */
+const val MARKDOWN_SOURCE_KEY = "markdown_source"
+
 private fun MarkdownComponentModel.getUnescapedTextInNode() = node.getUnescapedTextInNode(content)
 
 fun markdownComponents(

@@ -1,6 +1,8 @@
 package com.mikepenz.markdown.model
 
 import androidx.compose.runtime.Stable
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Interface to describe the [ReferenceLinkHandler]
@@ -21,13 +23,14 @@ interface ReferenceLinkHandler {
  */
 @Stable
 class ReferenceLinkHandlerImpl : ReferenceLinkHandler {
-    private val stored = mutableMapOf<String, String?>()
+    // Copied on write: a streaming state stores links from its parse thread while composition reads them.
+    private val stored = MutableStateFlow<Map<String, String?>>(emptyMap())
 
     override fun store(label: String, destination: String?) {
-        stored[label.lowercase()] = destination
+        stored.update { it + (label.lowercase() to destination) }
     }
 
     override fun find(label: String): String {
-        return stored[label.lowercase()] ?: ""
+        return stored.value[label.lowercase()] ?: ""
     }
 }

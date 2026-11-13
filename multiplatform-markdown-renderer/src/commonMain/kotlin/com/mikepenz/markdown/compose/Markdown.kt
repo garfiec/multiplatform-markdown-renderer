@@ -7,7 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalInspectionMode
 import com.mikepenz.markdown.compose.components.MarkdownComponents
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -25,6 +27,7 @@ import com.mikepenz.markdown.model.NoOpImageTransformerImpl
 import com.mikepenz.markdown.model.ReferenceLinkHandler
 import com.mikepenz.markdown.model.ReferenceLinkHandlerImpl
 import com.mikepenz.markdown.model.State
+import com.mikepenz.markdown.model.StreamingMarkdownChunk
 import com.mikepenz.markdown.model.StreamingMarkdownState
 import com.mikepenz.markdown.model.markdownAnimations
 import com.mikepenz.markdown.model.markdownAnnotator
@@ -404,21 +407,32 @@ fun MarkdownSuccess(
     }
 }
 
+/**
+ * Renders a [StreamingMarkdownState.Snapshot] in a [Column], one run of blocks after another.
+ *
+ * Each run and each block is keyed by its place in the document and drawn from its own text, so an
+ * update recomposes only what changed: as a document grows, that is the block being written. Each
+ * run draws into a layer of its own, so a run that did not change replays its drawing.
+ */
 @Composable
 fun StreamingMarkdownSuccess(
-    streamingMarkdownState: StreamingMarkdownState,
+    @Suppress("UNUSED_PARAMETER") streamingMarkdownState: StreamingMarkdownState,
     snapshot: StreamingMarkdownState.Snapshot,
     components: MarkdownComponents,
     modifier: Modifier = Modifier,
 ) {
-    val content = streamingMarkdownState.content
-
     Column(modifier) {
-        snapshot.stableAst.forEach { node ->
-            MarkdownElementInternal(node, components, content)
+        snapshot.chunks.forEach { chunk ->
+            key(chunk.index) { MarkdownChunk(chunk, components) }
         }
-        snapshot.unstableAstTail.forEach { node ->
-            MarkdownElementInternal(node, components, content)
+    }
+}
+
+@Composable
+private fun MarkdownChunk(chunk: StreamingMarkdownChunk, components: MarkdownComponents) {
+    Column(Modifier.graphicsLayer()) {
+        chunk.blocks.forEach { block ->
+            key(block.key) { MarkdownElement(block.node, components, block.content) }
         }
     }
 }

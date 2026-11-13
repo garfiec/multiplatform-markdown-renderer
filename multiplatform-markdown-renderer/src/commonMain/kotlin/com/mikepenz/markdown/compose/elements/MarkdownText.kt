@@ -41,6 +41,7 @@ import com.mikepenz.markdown.compose.LocalMarkdownComponents
 import com.mikepenz.markdown.compose.LocalMarkdownExtendedSpans
 import com.mikepenz.markdown.compose.LocalMarkdownInlineContent
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
+import com.mikepenz.markdown.compose.components.MARKDOWN_SOURCE_KEY
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.material.MarkdownBasicText
 import com.mikepenz.markdown.compose.extendedspans.ExtendedSpans
@@ -52,6 +53,7 @@ import com.mikepenz.markdown.utils.MARKDOWN_TAG_IMAGE_URL
 import com.mikepenz.markdown.utils.toPxOrZero
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
+import kotlinx.collections.immutable.persistentMapOf
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
 
@@ -157,6 +159,7 @@ fun MarkdownText(
         inlineImageAsBlock,
         imageNodes,
         density,
+        sourceContent,
     ) {
         derivedStateOf {
             // Pass the SnapshotStateMap directly so the snapshot system tracks
@@ -174,6 +177,7 @@ fun MarkdownText(
                 lineHeightPx = lineHeightPx,
                 inlineImageAsBlock = inlineImageAsBlock,
                 imageNodes = imageNodes,
+                sourceContent = sourceContent,
                 onBlockImage = { range -> blocks += range },
                 imageSizeChanged = { link, size -> imageSizeByLink += (link to size) },
             )
@@ -299,6 +303,7 @@ internal fun buildImageInlineContent(
     lineHeightPx: Float = 0f,
     inlineImageAsBlock: Boolean = true,
     imageNodes: List<ASTNode> = emptyList(),
+    sourceContent: String? = null,
     onBlockImage: ((BlockImageRange) -> Unit)? = null,
     imageSizeChanged: ((link: String, Size) -> Unit)? = null,
 ): Map<String, InlineTextContent> {
@@ -355,6 +360,7 @@ internal fun buildImageInlineContent(
             MarkdownInlineImageWithSize(
                 link = link,
                 node = node,
+                sourceContent = sourceContent,
                 transformer = transformer,
                 density = density,
                 onSizeDetected = { detectedSize ->
@@ -370,6 +376,7 @@ internal fun buildImageInlineContent(
 private fun MarkdownInlineImageWithSize(
     link: String,
     node: ASTNode,
+    sourceContent: String?,
     transformer: ImageTransformer,
     density: Density,
     onSizeDetected: (Size) -> Unit,
@@ -384,6 +391,11 @@ private fun MarkdownInlineImageWithSize(
 
     // Delegate to the customizable component
     LocalMarkdownComponents.current.inlineImage(
-        MarkdownComponentModel(link, node, LocalMarkdownTypography.current)
+        MarkdownComponentModel(
+            content = link,
+            node = node,
+            typography = LocalMarkdownTypography.current,
+            extra = if (sourceContent != null) persistentMapOf(MARKDOWN_SOURCE_KEY to sourceContent) else persistentMapOf(),
+        )
     )
 }

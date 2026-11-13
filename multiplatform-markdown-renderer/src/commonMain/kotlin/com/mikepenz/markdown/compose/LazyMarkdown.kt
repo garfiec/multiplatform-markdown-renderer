@@ -55,25 +55,24 @@ fun LazyMarkdownSuccess(
  */
 @Composable
 fun LazyMarkdownSuccess(
-    streamingMarkdownState: StreamingMarkdownState,
+    @Suppress("UNUSED_PARAMETER") streamingMarkdownState: StreamingMarkdownState,
     snapshot: StreamingMarkdownState.Snapshot,
     components: MarkdownComponents,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
-    val content = streamingMarkdownState.content
-    val nodes = remember(snapshot) { snapshot.stableAst + snapshot.unstableAstTail }
+    val blocks = remember(snapshot) { snapshot.chunks.flatMap { it.blocks } }
 
     LazyColumn(
         modifier = modifier,
         contentPadding = contentPadding,
     ) {
         items(
-            items = nodes,
-            key = { node -> node.startOffset },
-            contentType = { node -> node.type }
-        ) { node ->
-            MarkdownElementInternal(node, components, content)
+            items = blocks,
+            key = { block -> block.key },
+            contentType = { block -> block.node.type }
+        ) { block ->
+            MarkdownElement(block.node, components, block.content)
         }
     }
 }
